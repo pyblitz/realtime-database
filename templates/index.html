@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Realtime Database</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  body { font-family: sans-serif; max-width: 560px; margin: 30px auto; }
+  #messages { border: 1px solid #ccc; min-height: 220px; padding: 10px; }
+  #messages p { margin: 6px 0; }
+  input, button { padding: 8px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Live Realtime Database</h1>
+<p>Type in one window, watch it appear live in every other window.</p>
+<div id="messages"></div>
+<input id="user" placeholder="Your name" value="Ali">
+<input id="text" placeholder="Type a message">
+<button id="send">Send live</button>
+<script>
+  const socket = io();
+  const box = document.getElementById("messages");
+  function show(m) {
+    const p = document.createElement("p");
+    p.textContent = m.user + ": " + m.text;
+    box.appendChild(p);
+  }
+  fetch("/api/messages").then(r => r.json()).then(msgs => msgs.forEach(show));
+  socket.on("new_message", show);
+  document.getElementById("send").onclick = () => {
+    const m = {
+      user: document.getElementById("user").value,
+      text: document.getElementById("text").value
+    };
+    if (!m.text) return;
+    show(m);  // sender sees it at once; others get the live push
+    socket.emit("send_message", m);
+    document.getElementById("text").value = "";
+  };
+</script>
+</body>
+</html>
